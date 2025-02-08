@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate QR Code</title>
+</head>
+<body>
+    <h2>สร้าง QR Code สำหรับสินค้า</h2>
+    
+    <label>รหัสสินค้า:</label>
+    <input type="text" id="id"><br><br>
+
+    <label>ชื่อสินค้า:</label>
+    <input type="text" id="name"><br><br>
+
+    <label>หมวดหมู่:</label>
+    <input type="text" id="category"><br><br>
+
+    <label>ราคา:</label>
+    <input type="number" id="price"><br><br>
+
+    <label>วันที่:</label>
+    <input type="date" id="date"><br><br>
+
+    <button onclick="generateQR()">สร้าง QR Code</button>
+    <br><br>
+    
+    <img id="qrImage" src="" style="display: none;">
+    <br>
+    <a id="downloadBtn" style="display: none;" onclick="downloadQR()">📥 ดาวน์โหลด QR Code</a>
+    <button id="printBtn" style="display: none;" onclick="printQR()">🖨 พิมพ์ QR Code</button>
+
+    <script>
+        function generateQR() {
+            const id = document.getElementById("id").value.trim();
+            const name = document.getElementById("name").value.trim();
+            const category = document.getElementById("category").value.trim();
+            const price = document.getElementById("price").value.trim();
+            const date = document.getElementById("date").value.trim();
+
+            if (!id || !name || !category || !price || !date) {
+                alert("กรุณากรอกข้อมูลให้ครบทุกช่อง");
+                return;
+            }
+
+            const productData = { id, name, category, price, date };
+
+            fetch("http://127.0.0.1:5000/generate_qr", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(productData)
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const imgUrl = URL.createObjectURL(blob);
+                document.getElementById("qrImage").src = imgUrl;
+                document.getElementById("qrImage").style.display = "block";
+
+                // เปิดปุ่มดาวน์โหลดและปริ้น QR Code
+                document.getElementById("downloadBtn").style.display = "block";
+                document.getElementById("downloadBtn").href = imgUrl;
+                document.getElementById("downloadBtn").download = "qrcode.png";
+
+                document.getElementById("printBtn").style.display = "block";
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        function downloadQR() {
+            const link = document.createElement("a");
+            link.href = document.getElementById("qrImage").src;
+            link.download = "qrcode.png";
+            link.click();
+        }
+
+        function printQR() {
+            const qrWindow = window.open("");
+            qrWindow.document.write("<html><head><title>Print QR Code</title></head><body>");
+            qrWindow.document.write("<img src='" + document.getElementById("qrImage").src + "' width='300'>");
+            qrWindow.document.write("</body></html>");
+            qrWindow.document.close();
+            qrWindow.print();
+        }
+    </script>
+</body>
+</html>
