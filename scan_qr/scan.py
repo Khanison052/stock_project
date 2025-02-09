@@ -1,15 +1,16 @@
 import cv2
 import time
 import json
+import requests  # เพิ่ม requests
+
+# ตั้งค่า API URL
+API_URL = "http://localhost:3000/api/products"  # เปลี่ยน URL ตาม API ของคุณ
 
 # เปิดกล้อง
 cap = cv2.VideoCapture(0)
 
 # สร้างตัวแปร QRCodeDetector
 detector = cv2.QRCodeDetector()
-
-# เก็บค่าข้อมูลสินค้า
-product_data = {}
 
 while True:
     ret, frame = cap.read()
@@ -27,14 +28,17 @@ while True:
             # แปลงค่าที่อ่านได้เป็น JSON
             json_data = json.loads(value)
 
-            # ตรวจสอบว่ามีรหัสสินค้า (id) หรือไม่
-            product_id = json_data.get("id")
-            if product_id is not None:
-                # เก็บข้อมูลสินค้าใน dictionary
-                product_data[product_id] = json_data
-
+            # ตรวจสอบว่ามีรหัสสินค้า (codeproduct) หรือไม่
+            codeproduct = json_data.get("codeproduct")
+            if codeproduct is not None:
                 # แสดงข้อมูลสินค้า
-                print(json.dumps(product_data[product_id], indent=2, ensure_ascii=False))
+                print(json.dumps(json_data, indent=2, ensure_ascii=False))
+
+                # ส่ง POST ไปยัง API
+                response = requests.post(API_URL, json=json_data)
+
+                # แสดงผลลัพธ์จาก API
+                print(f"Response: {response.status_code} - {response.text}")
 
                 # วาดกรอบรอบ QR Code ที่ตรวจพบ
                 if pts is not None:

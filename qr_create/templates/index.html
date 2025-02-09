@@ -9,7 +9,7 @@
     <h2>สร้าง QR Code สำหรับสินค้า</h2>
     
     <label>รหัสสินค้า:</label>
-    <input type="text" id="id"><br><br>
+    <input type="text" id="codeproduct"><br><br>
 
     <label>ชื่อสินค้า:</label>
     <input type="text" id="name"><br><br>
@@ -33,18 +33,18 @@
 
     <script>
         function generateQR() {
-            const id = document.getElementById("id").value.trim();
+            const codeproduct = document.getElementById("codeproduct").value.trim();
             const name = document.getElementById("name").value.trim();
             const category = document.getElementById("category").value.trim();
             const price = document.getElementById("price").value.trim();
             const date = document.getElementById("date").value.trim();
 
-            if (!id || !name || !category || !price || !date) {
+            if (!codeproduct || !name || !category || !price || !date) {
                 alert("กรุณากรอกข้อมูลให้ครบทุกช่อง");
                 return;
             }
 
-            const productData = { id, name, category, price, date };
+            const productData = { codeproduct, name, category, price, date };
 
             fetch("http://127.0.0.1:5000/generate_qr", {
                 method: "POST",
