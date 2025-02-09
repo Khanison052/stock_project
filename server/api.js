@@ -29,6 +29,7 @@ router.get('/api/products', async (ctx) => {
 });
 
 // API สำหรับเพิ่มข้อมูลใหม่
+// API สำหรับเพิ่มข้อมูลใหม่หรืออัปเดตข้อมูลที่มีอยู่แล้ว
 router.post('/api/products', async (ctx) => {
   const { codeproduct, name, category, price, date, piece } = ctx.request.body;
 
@@ -50,12 +51,12 @@ router.post('/api/products', async (ctx) => {
     );
 
     if (existingProduct.length > 0) {
-      // ถ้ามีสินค้าแล้ว ให้เพิ่ม piece ไป 1 หรืออัปเดตข้อมูลอื่นๆ
+      // ถ้ามีสินค้าแล้ว ให้เพิ่ม piece ไป 1 แทนการอัปเดตค่าที่ส่งมาใหม่
       await pool.promise().query(
-        'UPDATE products_project SET name = ?, category = ?, price = ?, date = ?, piece = piece + 1 WHERE codeproduct = ?',
-        [name, category, price, date, codeproduct]
+        'UPDATE products_project SET piece = piece + 1 WHERE codeproduct = ?',
+        [codeproduct]
       );
-      ctx.body = { message: 'Product updated successfully', codeproduct, name, category, price, date, piece: pieceValue };
+      ctx.body = { message: 'Product piece updated successfully', codeproduct, piece: pieceValue + 1 };
     } else {
       // ถ้าไม่มีสินค้า ให้เพิ่มสินค้าใหม่
       const result = await pool.promise().query(
@@ -70,7 +71,10 @@ router.post('/api/products', async (ctx) => {
   }
 });
 
+
+
 // API สำหรับอัพเดตข้อมูลโดยใช้เฉพาะ codeproduct
+// API สำหรับอัปเดตข้อมูลสินค้าตาม codeproduct
 router.put('/api/products/:codeproduct', async (ctx) => {
   const { codeproduct } = ctx.params;
   const { name, category, price, date, piece } = ctx.request.body;
@@ -83,7 +87,7 @@ router.put('/api/products/:codeproduct', async (ctx) => {
   }
 
   try {
-    // อัพเดตข้อมูลโดยใช้ codeproduct
+    // อัปเดตข้อมูลตาม codeproduct
     const [result] = await pool.promise().query(
       'UPDATE products_project SET name = ?, category = ?, price = ?, date = ?, piece = ? WHERE codeproduct = ?',
       [name, category, price, date, piece, codeproduct]
