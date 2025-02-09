@@ -32,28 +32,47 @@ router.get('/api/products', async (ctx) => {
 router.post('/api/products', async (ctx) => {
   const { codeproduct, name, category, price, date, piece } = ctx.request.body;
 
-  // Validation
-  if (!codeproduct || !name || !category || !price || !date || !piece) {
+  // ถ้าไม่มีการส่ง piece มา ให้ตั้งค่าเป็น 1
+  const pieceValue = piece || 1;  // ใช้ piece ถ้ามี, ถ้าไม่มีให้ใช้ 1
+
+  // ตรวจสอบว่ามีรหัสสินค้า (codeproduct) หรือไม่
+  if (!codeproduct || !name || !category || !price || !date) {
     ctx.status = 400;
     ctx.body = { message: 'Missing required fields' };
     return;
   }
 
   try {
-    const result = await pool.promise().query(
-      'INSERT INTO products_project (codeproduct, name, category, price, date, piece) VALUES (?, ?, ?, ?, ?, ?)',
-      [codeproduct, name, category, price, date, piece]
+    // ตรวจสอบว่า codeproduct นี้มีอยู่ในฐานข้อมูลหรือยัง
+    const [existingProduct] = await pool.promise().query(
+      'SELECT * FROM products_project WHERE codeproduct = ?',
+      [codeproduct]
     );
-    ctx.body = { id: result[0].insertId, codeproduct, name, category, price, date, piece };
+
+    if (existingProduct.length > 0) {
+      // ถ้ามีสินค้าแล้ว ให้เพิ่ม piece ไป 1 หรืออัปเดตข้อมูลอื่นๆ
+      await pool.promise().query(
+        'UPDATE products_project SET name = ?, category = ?, price = ?, date = ?, piece = piece + 1 WHERE codeproduct = ?',
+        [name, category, price, date, codeproduct]
+      );
+      ctx.body = { message: 'Product updated successfully', codeproduct, name, category, price, date, piece: pieceValue };
+    } else {
+      // ถ้าไม่มีสินค้า ให้เพิ่มสินค้าใหม่
+      const result = await pool.promise().query(
+        'INSERT INTO products_project (codeproduct, name, category, price, date, piece) VALUES (?, ?, ?, ?, ?, ?)',
+        [codeproduct, name, category, price, date, pieceValue]
+      );
+      ctx.body = { id: result[0].insertId, codeproduct, name, category, price, date, piece: pieceValue };
+    }
   } catch (err) {
     ctx.status = 500;
-    ctx.body = { message: 'Error inserting product', error: err.message };
+    ctx.body = { message: 'Error inserting or updating product', error: err.message };
   }
 });
 
-// API สำหรับอัพเดตข้อมูล
-router.put('/api/products/:id/:codeproduct', async (ctx) => {
-  const { id, codeproduct } = ctx.params;
+// API สำหรับอัพเดตข้อมูลโดยใช้เฉพาะ codeproduct
+router.put('/api/products/:codeproduct', async (ctx) => {
+  const { codeproduct } = ctx.params;
   const { name, category, price, date, piece } = ctx.request.body;
 
   // Validation
@@ -64,11 +83,18 @@ router.put('/api/products/:id/:codeproduct', async (ctx) => {
   }
 
   try {
-    await pool.promise().query(
-      'UPDATE products_project SET name = ?, category = ?, price = ?, date = ?, piece = ? WHERE id = ? AND codeproduct = ?',
-      [name, category, price, date, piece, id, codeproduct]
+    // อัพเดตข้อมูลโดยใช้ codeproduct
+    const [result] = await pool.promise().query(
+      'UPDATE products_project SET name = ?, category = ?, price = ?, date = ?, piece = ? WHERE codeproduct = ?',
+      [name, category, price, date, piece, codeproduct]
     );
-    ctx.body = { message: 'Product updated successfully' };
+
+    if (result.affectedRows === 0) {
+      ctx.status = 404;
+      ctx.body = { message: 'Product not found' };
+    } else {
+      ctx.body = { message: 'Product updated successfully' };
+    }
   } catch (err) {
     ctx.status = 500;
     ctx.body = { message: 'Error updating product', error: err.message };
@@ -76,10 +102,10 @@ router.put('/api/products/:id/:codeproduct', async (ctx) => {
 });
 
 // API สำหรับลบข้อมูล
-router.delete('/api/products/:id/:codeproduct', async (ctx) => {
-  const { id, codeproduct } = ctx.params;
+router.delete('/api/products/:codeproduct', async (ctx) => {
+  const { codeproduct } = ctx.params;
   try {
-    await pool.promise().query('DELETE FROM products_project WHERE id = ? AND codeproduct = ?', [id, codeproduct]);
+    await pool.promise().query('DELETE FROM products_project WHERE codeproduct = ?', [codeproduct]);
     ctx.body = { message: 'Product deleted successfully' };
   } catch (err) {
     ctx.status = 500;
