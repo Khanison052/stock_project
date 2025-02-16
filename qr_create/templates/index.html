@@ -4,32 +4,83 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generate QR Code</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+            width: 400px;
+            text-align: center;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background: linear-gradient(135deg, #ff758c, #ff7eb3);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #ff5e78, #ff4e92);
+        }
+        img {
+            margin-top: 10px;
+            width: 200px;
+            display: none;
+        }
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+        }
+        .btn-group a, .btn-group button {
+            flex: 1;
+            margin: 5px;
+            padding: 10px;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            background: linear-gradient(135deg, #42e695, #3bb2b8);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-group a:hover, .btn-group button:hover {
+            background: linear-gradient(135deg, #2bd891, #2a99a5);
+        }
+    </style>
 </head>
 <body>
-    <h2>สร้าง QR Code สำหรับสินค้า</h2>
-    
-    <label>รหัสสินค้า:</label>
-    <input type="text" id="codeproduct"><br><br>
-
-    <label>ชื่อสินค้า:</label>
-    <input type="text" id="name"><br><br>
-
-    <label>หมวดหมู่:</label>
-    <input type="text" id="category"><br><br>
-
-    <label>ราคา:</label>
-    <input type="number" id="price"><br><br>
-
-    <label>วันที่:</label>
-    <input type="date" id="date"><br><br>
-
-    <button onclick="generateQR()">สร้าง QR Code</button>
-    <br><br>
-    
-    <img id="qrImage" src="" style="display: none;">
-    <br>
-    <a id="downloadBtn" style="display: none;" onclick="downloadQR()">📥 ดาวน์โหลด QR Code</a>
-    <button id="printBtn" style="display: none;" onclick="printQR()">🖨 พิมพ์ QR Code</button>
+    <div class="container">
+        <h2 style="color: #ff5e78;">สร้าง QR Code สำหรับสินค้า</h2>
+        <input type="text" id="codeproduct" placeholder="รหัสสินค้า">
+        <input type="text" id="name" placeholder="ชื่อสินค้า">
+        <input type="text" id="category" placeholder="หมวดหมู่">
+        <input type="number" id="price" placeholder="ราคา">
+        <input type="date" id="date">
+        <button onclick="generateQR()">สร้าง QR Code</button>
+        <img id="qrImage">
+        <div class="btn-group">
+            <a id="downloadBtn" style="display: none;" onclick="downloadQR()">📥 ดาวน์โหลด</a>
+            <button id="printBtn" style="display: none;" onclick="printQR()">🖨 พิมพ์</button>
+        </div>
+    </div>
 
     <script>
         function generateQR() {
@@ -56,12 +107,9 @@
                 const imgUrl = URL.createObjectURL(blob);
                 document.getElementById("qrImage").src = imgUrl;
                 document.getElementById("qrImage").style.display = "block";
-
-                // เปิดปุ่มดาวน์โหลดและปริ้น QR Code
                 document.getElementById("downloadBtn").style.display = "block";
                 document.getElementById("downloadBtn").href = imgUrl;
                 document.getElementById("downloadBtn").download = "qrcode.png";
-
                 document.getElementById("printBtn").style.display = "block";
             })
             .catch(error => console.error("Error:", error));
@@ -75,7 +123,7 @@
         }
 
         function printQR() {
-            const qrWindow = window.open("");
+            const qrWindow = window.open("", "_blank");
             qrWindow.document.write("<html><head><title>Print QR Code</title></head><body>");
             qrWindow.document.write("<img src='" + document.getElementById("qrImage").src + "' width='300'>");
             qrWindow.document.write("</body></html>");
