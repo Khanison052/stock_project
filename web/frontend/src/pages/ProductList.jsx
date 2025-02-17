@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Table, Spinner, Alert } from 'react-bootstrap';
+import { Table, Spinner, Alert, Button } from 'react-bootstrap';
+import { Link } from 'react-router-dom';  // เพิ่ม Link
 
 function ProductList() {
   const [products, setProducts] = useState([]);
@@ -43,6 +44,7 @@ function ProductList() {
               <th>Price</th>
               <th>Date</th>
               <th>Piece</th>
+              <th>Actions</th> {/* เพิ่ม Actions */}
             </tr>
           </thead>
           <tbody>
@@ -54,6 +56,12 @@ function ProductList() {
                 <td>{product.price}</td>
                 <td>{product.date}</td>
                 <td>{product.piece}</td>
+                <td>
+                  {/* เพิ่มปุ่ม Edit */}
+                  <Link to={`/edit-product/${product.codeproduct}`}>
+                    <Button variant="warning" size="sm">Edit</Button>
+                  </Link>
+                </td>
               </tr>
             ))}
           </tbody>
