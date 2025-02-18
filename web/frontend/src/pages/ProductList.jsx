@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Table, Spinner, Alert, Button } from 'react-bootstrap';
+import { Table, Spinner, Alert, Button, Form } from 'react-bootstrap';
 import { Link } from 'react-router-dom';  // เพิ่ม Link
 
 function ProductList() {
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]); // สำหรับสินค้าที่กรองแล้ว
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState(''); // สำหรับเก็บค่าการค้นหา
 
   useEffect(() => {
     axios.get('http://localhost:3000/api/products')
       .then(response => {
         setProducts(response.data);
+        setFilteredProducts(response.data); // เริ่มต้นแสดงทั้งหมด
         setLoading(false);
       })
       .catch(error => {
@@ -20,9 +23,30 @@ function ProductList() {
       });
   }, []);
 
+  // ฟังก์ชันการค้นหาที่จะกรองสินค้าจากชื่อ, ประเภท หรือ codeproduct
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+    const filtered = products.filter(
+      product =>
+        product.name.toLowerCase().includes(e.target.value.toLowerCase()) ||
+        product.category.toLowerCase().includes(e.target.value.toLowerCase()) ||
+        product.codeproduct.toLowerCase().includes(e.target.value.toLowerCase()) // เพิ่มการค้นหาจาก codeproduct
+    );
+    setFilteredProducts(filtered);
+  };
+
   return (
     <div>
       <h2>Product List</h2>
+
+      {/* ฟอร์มการค้นหา */}
+      <Form.Control
+        type="text"
+        placeholder="Search by name, category or code"
+        value={searchQuery}
+        onChange={handleSearch}
+        className="mb-4"
+      />
 
       {loading ? (
         <div className="d-flex justify-content-center">
@@ -32,7 +56,7 @@ function ProductList() {
         <Alert variant="danger">
           Error loading products: {error.message}
         </Alert>
-      ) : products.length === 0 ? (
+      ) : filteredProducts.length === 0 ? (
         <p>No products available.</p>
       ) : (
         <Table striped bordered hover>
@@ -48,7 +72,7 @@ function ProductList() {
             </tr>
           </thead>
           <tbody>
-            {products.map(product => (
+            {filteredProducts.map(product => (
               <tr key={product.codeproduct}>
                 <td>{product.codeproduct}</td>
                 <td>{product.name}</td>
